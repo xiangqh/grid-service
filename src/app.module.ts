@@ -5,6 +5,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import configuration from './config/configuration';
+import { Grid } from './entities/grid.entity';
+import { User } from './entities/user.entity';
 import { FuturesModule } from './futures/futures.module';
 
 @Module({
@@ -22,10 +24,10 @@ import { FuturesModule } from './futures/futures.module';
             type: 'mysql',
             host: configService.get('db.host') || '127.0.0.1',
             port: configService.get('db.port') || 3306,
-            username: configService.get('db.userna,e'),
+            username: configService.get('db.usernae'),
             password: configService.get('db.password'),
             database: configService.get('db.database'),
-            // entities: [User, Pool,Withdraw, Profit, Stake, ScanTask, DProfit],
+            entities: [User, Grid],
             synchronize: true,
           }
         } else {
