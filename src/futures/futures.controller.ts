@@ -27,7 +27,11 @@ export class FuturesController {
     return user;
   }
 
-  async buildApi(sessionID) {
+  async buildApi(req) {
+    let sessionID = req.headers.sessionid;
+    if(!sessionID) {
+      sessionID = req.cookies.sessionID
+    }
     const user = await this.checkSession(sessionID);
     const client = new ApiClient();
 
@@ -109,27 +113,27 @@ export class FuturesController {
 
   @Get("/getContract/:contract")
   async getContract(@Param('contract') contract: string, @Req() req) {
-    return this.appService.getContracts(await this.buildApi(req.cookies.sessionID), contract);
+    return this.appService.getContracts(await this.buildApi(req), contract);
   }
 
   @Get("/accounts")
   async accounts(@Req() req) {
-    return this.appService.getAccounts(await this.buildApi(req.cookies.sessionID));
+    return this.appService.getAccounts(await this.buildApi(req));
   }
 
   @Get('/listPositions/:contract')
   async listPositions(@Param('contract') contract: string, @Req() req) {
     
-    return this.appService.listPositions(await this.buildApi(req.cookies.sessionID), contract);
+    return this.appService.listPositions(await this.buildApi(req), contract);
   }
 
   @Get('/getPositions/:contract')
   async getPosition(@Param('contract') contract: string, @Req() req) {
-    return this.appService.getPositions(await this.buildApi(req.cookies.sessionID), contract);
+    return this.appService.getPositions(await this.buildApi(req), contract);
   }
   @Get('/orderLeftPositionSize/:contract')
   async orderLeftPositionSize(@Param('contract') contract: string, @Req() req) {
-    return this.appService.orderLeftPositionSize(await this.buildApi(req.cookies.sessionID), contract);
+    return this.appService.orderLeftPositionSize(await this.buildApi(req), contract);
   }
 
   @Post("/createOrder/:contract")
@@ -137,29 +141,29 @@ export class FuturesController {
     const price = req.query['price'];
     const size = req.query['size'];
     const autoSize = req.query['autoSize'];
-    return this.appService.createOrder(await this.buildApi(req.cookies.sessionID), contract, price, size, autoSize);
+    return this.appService.createOrder(await this.buildApi(req), contract, price, size, autoSize);
   }
 
   @Post("/closing/:contract")
   async closing(@Param('contract') contract: string, @Req() req) {
     const autoSize = req.query['autoSize'];
-    return this.appService.closing(await this.buildApi(req.cookies.sessionID), contract,
+    return this.appService.closing(await this.buildApi(req), contract,
       autoSize);
   }
 
   @Get("/order/:orderId")
   async order(@Param('orderId') orderId: string, @Req() req) {
-    return this.appService.order(await this.buildApi(req.cookies.sessionID), orderId);
+    return this.appService.order(await this.buildApi(req), orderId);
   }
 
   @Get("/openOrders/:contract")
   async orders(@Param('contract') contract: string, @Req() req) {
-    return this.appService.openOrders(await this.buildApi(req.cookies.sessionID), contract);
+    return this.appService.openOrders(await this.buildApi(req), contract);
   }
 
   @Post("/saveGrid")
   async saveGrid(@Body() grid: Grid, @Req() req) {
-    const user = await this.checkSession(req.cookies.sessionID);
+    const user = await this.checkSession(req.headers.sessionid);
     grid.userId = user.id;
     this.logger.log(`saveGrid, ${grid}`);
     grid.status = GridStatus.COMPLETED;
@@ -168,13 +172,13 @@ export class FuturesController {
 
   @Post("/updateGrid/")
   async updateGrid(@Body() grid: Grid, @Req() req) {
-    await this.checkSession(req.cookies.sessionID)
+    await this.checkSession(req.headers.sessionid)
     return await this.dataSource.getRepository(Grid).update({ id: grid.id, status: GridStatus.COMPLETED }, { status: GridStatus.SUBMITTING })
   }
 
   @Post("/deleteGrid/:id")
   async deleteGrid(@Param('id') id: number, @Req() req) {
-    await this.checkSession(req.cookies.sessionID)
+    await this.checkSession(req.headers.sessionid)
     const grid = await this.dataSource.getRepository(Grid).findOne({ where: { id: id } });
     grid.status = GridStatus.STOPED;
     return this.dataSource.getRepository(Grid).save(grid);
@@ -182,7 +186,7 @@ export class FuturesController {
 
   @Get("/grids/:contract")
   async getGrids(@Param('contract') contract: string, @Req() req) {
-    const user = await this.checkSession(req.cookies.sessionID);
+    const user = await this.checkSession(req.headers.sessionid);
     // this.logger.log(`grids: ${contract}, ${user.id}, ${req.cookies.sessionID}`);
     return this.dataSource.getRepository(Grid).find({
       where: {

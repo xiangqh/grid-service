@@ -24,7 +24,7 @@ import { FuturesModule } from './futures/futures.module';
             type: 'mysql',
             host: configService.get('db.host') || '127.0.0.1',
             port: configService.get('db.port') || 3306,
-            username: configService.get('db.usernae'),
+            username: configService.get('db.username'),
             password: configService.get('db.password'),
             database: configService.get('db.database'),
             entities: [User, Grid],

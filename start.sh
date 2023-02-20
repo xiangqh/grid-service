@@ -10,10 +10,10 @@ LOGDIR="./log"
 current=`date "+%Y-%m-%d"`
 logName="app_$current.log"
 
-echo -n "Enter your key:"
-read -s key
-echo $key > 0
+#echo -n "Enter your key:"
+#read -s key
+#echo $key > 0
 
-cmd="./service"
+cmd="node dist/main.js"
 
-nohup ${cmd} < 0 >> "${LOGDIR}/${logName}" 2>&1 & echo $! > "./pid"
+nohup ${cmd} >> "${LOGDIR}/${logName}" 2>&1 & echo $! > "./pid"
