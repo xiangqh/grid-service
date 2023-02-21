@@ -68,7 +68,12 @@ export class TaskService {
                     this.gridRepository.findOneBy({ id: gridGroup.long }),
                     this.gridRepository.findOneBy({ id: gridGroup.short })
                 ]).then((values) => {
-                    this.runGridGroupTask(values);
+                    if ((values[0] == null || values[0].status == GridStatus.STOPED) &&
+                        (values[1] == null || values[1].status == GridStatus.STOPED)) {
+                        this.logger.log(`grid ${key} STOPED`);
+                    } else {
+                        this.runGridGroupTask(values);
+                    }
                 });
             } catch (error) {
                 this.logger.error(error);
@@ -107,7 +112,7 @@ export class TaskService {
 
         this.logger.log(`run[${contractName}] gridGroup[${grids[0]?.id}, ${grids[1]?.id}], user[${userId}]....`);
         const contract = await this.appService.getContracts(api, contractName);
-  
+
         Promise.all([
             this.appService.listPositions(api, contract.name),
             this.appService.openOrders(api, contract.name),
