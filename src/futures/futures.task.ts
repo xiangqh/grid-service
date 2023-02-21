@@ -127,6 +127,7 @@ export class TaskService {
 
     async processLong(grid: Grid, contract: Contract, position: Position, orderLefts: any, api: FuturesApi) {
         if (!grid && grid.status != GridStatus.COMPLETED) {
+            this.logger.log(`grid[${grid.id}] STOPED or SUBMITTING`);
             return;
         }
 
