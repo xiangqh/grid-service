@@ -84,8 +84,15 @@ export class TaskService {
     }
 
     buildOrderLefts(orders) {
-        const orderLefts = {};
+        const list = [{}, {}];
         orders.forEach(each => {
+            let orderLefts;
+            if ((each.isReduceOnly && each.size < 0) || (!each.isReduceOnly && each.size > 0)) {
+                orderLefts = list[0];
+            } else {
+                orderLefts = list[1];
+            }
+
             if (!orderLefts[each.price]) {
                 orderLefts[each.price] = { buySize: 0, sellSize: 0 };
             }
@@ -96,7 +103,7 @@ export class TaskService {
                 orderLefts[each.price].buySize += each.left;
             }
         });
-        return orderLefts;
+        return list;
     }
 
 
@@ -117,11 +124,11 @@ export class TaskService {
         ]).then((values) => {
             const positions = values[0];
             const orders = values[1];
-            const orderLefts = this.buildOrderLefts(values[1]);
+            const orderLeftsList = this.buildOrderLefts(values[1]);
             this.logger.log(`run task[${contractName}] user[${userId}] indexPrice:${contract.indexPrice} gridGroup[${grids[0]?.id}, ${grids[1]?.id}] positions[${positions[0].size}, ${positions[1].size}]`);
-
-            this.processLong(grids[0], contract, positions[0], orderLefts, api);
-            this.processShort(grids[1], contract, positions[1], orderLefts, api);
+            
+            this.processLong(grids[0], contract, positions[0], orderLeftsList[0], api);
+            this.processShort(grids[1], contract, positions[1], orderLeftsList[1], api);
         }).catch(err => {
             console.log(err)
         });
