@@ -1,4 +1,4 @@
-import { Body, Controller, ForbiddenException, Get, Logger, Param, Post, Req, Res, UnauthorizedException, UseFilters } from '@nestjs/common';
+import { BadRequestException, Body, Controller, ForbiddenException, Get, Logger, Param, Post, Req, Res, UnauthorizedException, UseFilters } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { FuturesOrder, FuturesApi, ApiClient } from 'gate-api';
@@ -17,11 +17,11 @@ export class FuturesController {
   }
 
   async checkSession(sessionID) {
-    if(!sessionID) {
+    if (!sessionID) {
       throw new ForbiddenException();
     }
-    const user = await this.dataSource.getRepository(User).findOneBy({sessionID:sessionID});
-    if(user == null || user.loginTime.getTime() + 1000 * 24 * 3600 * 7 < new Date().getTime()) {
+    const user = await this.dataSource.getRepository(User).findOneBy({ sessionID: sessionID });
+    if (user == null || user.loginTime.getTime() + 1000 * 24 * 3600 * 7 < new Date().getTime()) {
       throw new ForbiddenException();
     }
     return user;
@@ -29,7 +29,7 @@ export class FuturesController {
 
   async buildApi(req) {
     let sessionID = req.headers.sessionid;
-    if(!sessionID) {
+    if (!sessionID) {
       sessionID = req.cookies.sessionID
     }
     const user = await this.checkSession(sessionID);
@@ -123,7 +123,7 @@ export class FuturesController {
 
   @Get('/listPositions/:contract')
   async listPositions(@Param('contract') contract: string, @Req() req) {
-    
+
     return this.appService.listPositions(await this.buildApi(req), contract);
   }
 
@@ -163,12 +163,26 @@ export class FuturesController {
 
   @Post("/saveGrid")
   async saveGrid(@Body() grid: Grid, @Req() req) {
+    if (Math.floor(grid.totalSize) != grid.totalSize || Math.floor(grid.gridNum) != grid.gridNum) {
+      throw new BadRequestException();
+    }
+
+    if (Math.floor(grid.totalSize / grid.gridNum) * grid.gridNum != grid.totalSize) {
+      throw new BadRequestException();
+    }
+
+    if ((Number(grid.topPrice) > Number(grid.buyPrice) && grid.totalSize < 0) ||
+      (Number(grid.topPrice) < Number(grid.buyPrice) && grid.totalSize > 0)) {
+      throw new BadRequestException();
+    }
+
     const user = await this.checkSession(req.headers.sessionid);
     grid.userId = user.id;
     this.logger.log(`saveGrid, ${JSON.stringify(grid)}`);
-    if(!grid.status) {
+    if (!grid.status) {
       grid.status = GridStatus.COMPLETED;
     }
+
     return this.dataSource.getRepository(Grid).save(grid);;
   }
 

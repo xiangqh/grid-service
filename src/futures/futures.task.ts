@@ -70,7 +70,7 @@ export class TaskService {
                 ]).then((values) => {
                     if ((values[0] == null || values[0].status == GridStatus.STOPED) &&
                         (values[1] == null || values[1].status == GridStatus.STOPED)) {
-                        this.logger.log(`grid ${key} STOPED`);
+                        this.logger.log(`task grid[${key}] STOPED`);
                     } else {
                         this.runGridGroupTask(values);
                     }
@@ -106,11 +106,11 @@ export class TaskService {
         const api = this.apiMaps.get(userId);
 
         if (!api) {
-            this.logger.error(`run gridGroup[${grids[0]?.id}, ${grids[1]?.id}], user[${userId}] error`);
+            this.logger.error(`run task[${contractName}] gridGroup[${grids[0]?.id}, ${grids[1]?.id}], user[${userId}] error`);
             return;
         }
 
-        this.logger.log(`run[${contractName}] gridGroup[${grids[0]?.id}, ${grids[1]?.id}], user[${userId}]....`);
+
         const contract = await this.appService.getContracts(api, contractName);
 
         Promise.all([
@@ -120,13 +120,69 @@ export class TaskService {
             const positions = values[0];
             const orders = values[1];
             const orderLefts = this.buildOrderLefts(values[1]);
-            this.logger.log(`runTask: ${contract.indexPrice}, long: ${positions[0].size}, short: ${positions[1].size}`);
+            this.logger.log(`run task[${contractName}] user[${userId}] indexPrice:${contract.indexPrice} gridGroup[${grids[0]?.id}, ${grids[1]?.id}] positions[${positions[0].size}, ${positions[1].size}]`);
 
             this.processLong(grids[0], contract, positions[0], orderLefts, api);
-            // this.processShort(grids[0], contract, positions[0], orderLefts, api);
+            this.processShort(grids[1], contract, positions[1], orderLefts, api);
         }).catch(err => {
             console.log(err)
         });
+    }
+
+    async processShort(grid: Grid, contract: Contract, position: Position, orderLefts: any, api: FuturesApi) {
+        if (!grid && grid.status != GridStatus.COMPLETED) {
+            this.logger.log(`grid[${grid.id}] IS NULL OR STOPED OR SUBMITTING`);
+            return;
+        }
+
+        this.logger.log(`processShort ${contract.name}[${contract.indexPrice}] grid[${grid.id}, ${grid.buyPrice}, ${grid.totalSize}] position size: ${position.size}`);
+        if (this.comparePrice(contract.indexPrice, grid.closePrice, grid.priceRound) >= 0) {
+            //closing indexPrice >= closePrice
+            this.logger.log(`processShort ${contract.name} grid[${grid.id}] indexPrice[${contract.indexPrice}] >= closePrice[${grid.closePrice}] position size: ${position.size}`)
+            if (position.size < 0) {
+                this.executeProcess(api, grid, this.appService.closing, [contract.name, 1]);
+            }
+        } else if (this.comparePrice(contract.indexPrice, grid.buyPrice, grid.priceRound) >= 0) {
+            //start indexPrice >= buyPrice
+            if (position.size == 0 && (!orderLefts[grid.buyPrice] || orderLefts[grid.buyPrice] == 0)) {
+                this.logger.log(`processShort ${contract.name} grid[${grid.id}] indexPrice[${contract.indexPrice}] >= buyPrice[${grid.buyPrice}] position size: ${position.size}`);
+                this.executeProcess(api, grid, this.appService.createOrder, [contract.name, grid.buyPrice, grid.totalSize, 1]);
+            }
+        }
+        else {
+            this.logger.log(`processShort ${contract.name} grid[${grid.id}] buyPrice[${grid.buyPrice}] > indexPrice[${contract.indexPrice}] > topPrice[${grid.topPrice}] position size: ${position.size}`)
+            const spanPrice = (Number(grid.topPrice) - Number(grid.buyPrice)) / grid.gridNum;
+            const spanSize = grid.totalSize / grid.gridNum;
+
+            for (var i = grid.gridNum - 1; i >= 0; i--) {
+                let gridPrice = Number(grid.buyPrice) + spanPrice * i;
+                if (this.comparePrice(contract.indexPrice, gridPrice, grid.priceRound) < 0) {
+                    //indexPrice >  gridPrice
+
+                    const needSize = grid.totalSize * (grid.gridNum - i) / grid.gridNum;
+                    let sellSize = needSize - position.size - spanSize;
+                    let buySize = needSize - position.size;
+                    if (orderLefts[gridPrice]) {
+                        buySize -= orderLefts[gridPrice].buySize;
+                    }
+                    if (orderLefts[gridPrice + spanPrice]) {
+                        sellSize -= orderLefts[gridPrice + spanPrice].sellSize;
+                    }
+
+                    // console.log(needSize, sellSize, buySize, orderLefts[gridPrice], orderLefts[gridPrice + spanPrice]);
+                    if (sellSize > 0) {
+                        this.logger.log(`processShort ${contract.name} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
+                        this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice + spanPrice, sellSize, 1]);
+                    }
+
+                    if (buySize < 0) {
+                        this.logger.log(`processShort ${contract.name} buy size:${buySize} at price:${gridPrice}`);
+                        this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice, buySize, 1]);
+                    }
+                    break;
+                }
+            }
+        }
     }
 
 
@@ -173,12 +229,12 @@ export class TaskService {
 
                     // console.log(needSize, sellSize, buySize, orderLefts[gridPrice], orderLefts[gridPrice + spanPrice]);
                     if (sellSize < 0) {
-                        this.logger.log(`${contract.name} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
+                        this.logger.log(`processLong ${contract.name} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice + spanPrice, sellSize, 0]);
                     }
 
                     if (buySize > 0) {
-                        this.logger.log(`${contract.name} buy size:${buySize} at price:${gridPrice}`);
+                        this.logger.log(`processLong ${contract.name} buy size:${buySize} at price:${gridPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice, buySize, 0]);
                     }
                     break;
@@ -187,9 +243,7 @@ export class TaskService {
         }
     }
 
-    async processShort(grid: Grid, contract: Contract, position: Position, orderLefts: any, api: FuturesApi) {
 
-    }
 
     async executeProcess(api, grid, run, args) {
         let self = this;
