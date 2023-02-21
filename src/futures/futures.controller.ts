@@ -204,11 +204,28 @@ export class FuturesController {
   async getGrids(@Param('contract') contract: string, @Req() req) {
     const user = await this.checkSession(req.headers.sessionid);
     // this.logger.log(`grids: ${contract}, ${user.id}, ${req.cookies.sessionID}`);
-    return this.dataSource.getRepository(Grid).find({
+    let list = await this.dataSource.getRepository(Grid).find({
       where: {
         contract: contract,
         userId: user.id
       }
     });
+    let ret = [null, null];
+    if(list.length == 1) {
+      if(Number(list[0].topPrice) > Number(list[0].buyPrice)) {
+        ret[0] = list[0];
+      } else {
+        ret[1] = list[0];
+      }
+    } else if(list.length == 2){
+      if(Number(list[0].topPrice) > Number(list[0].buyPrice)) {
+        ret[0] = list[0];
+        ret[1] = list[1];
+      } else {
+        ret[0] = list[1];
+        ret[1] = list[0];
+      }
+    }
+    return ret;
   }
 }

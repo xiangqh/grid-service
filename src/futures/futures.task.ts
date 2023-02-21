@@ -169,12 +169,12 @@ export class TaskService {
 
                     // console.log(needSize, sellSize, buySize, orderLefts[gridPrice], orderLefts[gridPrice + spanPrice]);
                     if (sellSize > 0) {
-                        this.logger.log(`processShort ${contract.name} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
+                        this.logger.log(`processShort ${contract.name} grid[${grid.id}] sell size:${sellSize} at price:${gridPrice + spanPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice + spanPrice, sellSize, 1]);
                     }
 
                     if (buySize < 0) {
-                        this.logger.log(`processShort ${contract.name} buy size:${buySize} at price:${gridPrice}`);
+                        this.logger.log(`processShort ${contract.name} grid[${grid.id}] buy size:${buySize} at price:${gridPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice, buySize, 1]);
                     }
                     break;
@@ -227,12 +227,12 @@ export class TaskService {
 
                     // console.log(needSize, sellSize, buySize, orderLefts[gridPrice], orderLefts[gridPrice + spanPrice]);
                     if (sellSize < 0) {
-                        this.logger.log(`processLong ${contract.name} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
+                        this.logger.log(`processLong ${contract.name} grid[${grid.id}] sell size:${sellSize} at price:${gridPrice + spanPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice + spanPrice, sellSize, 0]);
                     }
 
                     if (buySize > 0) {
-                        this.logger.log(`processLong ${contract.name} buy size:${buySize} at price:${gridPrice}`);
+                        this.logger.log(`processLong ${contract.name} grid[${grid.id}] buy size:${buySize} at price:${gridPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice, buySize, 0]);
                     }
                     break;
