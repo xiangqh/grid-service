@@ -165,8 +165,10 @@ export class FuturesController {
   async saveGrid(@Body() grid: Grid, @Req() req) {
     const user = await this.checkSession(req.headers.sessionid);
     grid.userId = user.id;
-    this.logger.log(`saveGrid, ${grid}`);
-    grid.status = GridStatus.COMPLETED;
+    this.logger.log(`saveGrid, ${JSON.stringify(grid)}`);
+    if(!grid.status) {
+      grid.status = GridStatus.COMPLETED;
+    }
     return this.dataSource.getRepository(Grid).save(grid);;
   }
 
