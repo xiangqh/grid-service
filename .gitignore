@@ -36,4 +36,4 @@ lerna-debug.log*
 *.db
 config.yaml
 *.sh
-ppackage-lock.json
+package-lock.json
