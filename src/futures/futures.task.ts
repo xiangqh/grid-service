@@ -55,7 +55,7 @@ export class TaskService {
             });
 
             gridGroup.forEach((value, key) => {
-                this.startGridTask(key, value, '0/10 * * * * *');
+                this.startGridTask(key, value, '0/5 * * * * *');
             })
         });
     }
@@ -110,9 +110,7 @@ export class TaskService {
             return;
         }
 
-
         const contract = await this.appService.getContracts(api, contractName);
-
         Promise.all([
             this.appService.listPositions(api, contract.name),
             this.appService.openOrders(api, contract.name),
@@ -130,8 +128,8 @@ export class TaskService {
     }
 
     async processShort(grid: Grid, contract: Contract, position: Position, orderLefts: any, api: FuturesApi) {
-        if (!grid && grid.status != GridStatus.COMPLETED) {
-            this.logger.log(`grid[${grid.id}] IS NULL OR STOPED OR SUBMITTING`);
+        if (!grid || grid.status != GridStatus.COMPLETED) {
+            // this.logger.log(`processShort grid[${grid?.id}] IS NULL OR STOPED OR SUBMITTING`);
             return;
         }
 
