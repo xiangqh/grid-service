@@ -126,9 +126,10 @@ export class TaskService {
             const orders = values[1];
             const orderLeftsList = this.buildOrderLefts(values[1]);
             this.logger.log(`run task[${contractName}] user[${userId}] indexPrice:${contract.indexPrice} gridGroup[${grids[0]?.id}, ${grids[1]?.id}] positions[${positions[0].size}, ${positions[1].size}]`);
-            
-            this.processLong(grids[0], contract, positions[0], orderLeftsList[0], api);
-            this.processShort(grids[1], contract, positions[1], orderLeftsList[1], api);
+
+            console.log(orderLeftsList);
+            // this.processLong(grids[0], contract, positions[0], orderLeftsList[0], api);
+            // this.processShort(grids[1], contract, positions[1], orderLeftsList[1], api);
         }).catch(err => {
             console.log(err)
         });

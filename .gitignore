@@ -37,3 +37,4 @@ lerna-debug.log*
 config.yaml
 *.sh
 package-lock.json
+*.spec.ts
