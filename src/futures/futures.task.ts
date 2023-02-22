@@ -8,11 +8,8 @@ import { FuturesService } from './futures.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Grid, GridStatus } from '../entities/grid.entity';
 import { Contract, Position } from 'gate-api';
-import { User } from 'src/entities/user.entity';
-import { map } from 'rxjs';
-import chacha20 from 'src/utils/chacha20';
-import { buildAPIFromUser } from 'src/utils/api';
-// import { FuturesOrder } from 'gate-api';
+import { User } from '../entities/user.entity';
+import { buildAPIFromUser } from '../utils/api';
 
 
 interface GridGroup {

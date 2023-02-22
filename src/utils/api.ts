@@ -1,9 +1,9 @@
 import { ApiClient, FuturesApi } from "gate-api";
-import { User } from "src/entities/user.entity";
+import { User } from "../entities/user.entity";
 import chacha20 from "./chacha20";
 
 
-function encrypt(text: string, password: string, len: number, encoding?: BufferEncoding) {
+export function encrypt(text: string, password: string, len: number, encoding?: BufferEncoding) {
     const key = Buffer.alloc(32);
     key.write(password);
 
@@ -30,3 +30,5 @@ export function buildAPIFromUser(user: User, basePath?: string) {
     }
     return new FuturesApi(client);
 }
+
+export {};

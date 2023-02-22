@@ -5,9 +5,9 @@ import { FuturesOrder, FuturesApi, ApiClient } from 'gate-api';
 import { Grid, GridStatus } from '../entities/grid.entity';
 import { FuturesService } from './futures.service';
 import { ConfigService } from '@nestjs/config';
-import { User } from 'src/entities/user.entity';
+import { User } from '../entities/user.entity';
 import * as uuid from 'uuid';
-import chacha20 from 'src/utils/chacha20';
+import { buildAPIFromUser, encrypt } from '../utils/api';
 
 @Controller('futures')
 export class FuturesController {
@@ -33,21 +33,7 @@ export class FuturesController {
       sessionID = req.cookies.sessionID
     }
     const user = await this.checkSession(sessionID);
-    const client = new ApiClient();
-
-    const password = Buffer.alloc(32);
-    password.write(user.password);
-    const plaintextKey = Buffer.alloc(16);
-    plaintextKey.write(user.key, 'hex');
-    const plaintextSecret = Buffer.alloc(32);
-    plaintextSecret.write(user.secret, 'hex');
-
-    const key = chacha20(plaintextKey, password);
-    const secret = chacha20(plaintextSecret, password);
-
-    client.setApiKeySecret(key.toString('hex'), secret.toString('hex'));
-    client.basePath = this.configService.get('basePath');
-    return new FuturesApi(client);
+    return buildAPIFromUser(user, this.configService.get('basePath'));
   }
 
   @Post("/logout")
@@ -102,6 +88,7 @@ export class FuturesController {
     } else {
       // user.sessionID = uuid.v4();
       // user.loginTime = new Date();
+      user.password = encrypt(user.password, global.key, user.password.length).toString('hex');
       let ret = await repository.save(user);
       // resp.cookie('sessionID', user.sessionID, { maxAge: 1000 * 3600 * 3});
       return {

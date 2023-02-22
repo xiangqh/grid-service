@@ -30,9 +30,7 @@ async function bootstrap() {
   app.use(cookieParser());
 
   const configService = app.get(ConfigService);
-
- 
-
+  
   await app.listen(configService.get("port", "3000"));
   console.log(`app start port ${configService.get("port", "3000")}`,);
 }
