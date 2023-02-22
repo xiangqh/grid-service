@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AccountsModule } from './accounts/accounts.module';
 
 import configuration from './config/configuration';
 import { Grid } from './entities/grid.entity';
@@ -41,6 +42,7 @@ import { FuturesModule } from './futures/futures.module';
       }
     }),
     FuturesModule,
+    AccountsModule,
     ScheduleModule.forRoot(),
   ],
   providers: []
