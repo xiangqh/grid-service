@@ -87,7 +87,7 @@ export class FuturesService {
 
 
   async createOrder(api: GateApi.FuturesApi, contract: string, price: string, size: number, autoSize: number, callback?: Function) {
-    console.log(`createOrder ${contract}  ${price} ${size} ${autoSize}`, )
+    console.log(`createOrder ${contract}  ${price} ${size} ${autoSize}`,)
     const futuresOrder = new GateApi.FuturesOrder(); // FuturesOrder | 
 
     futuresOrder.contract = contract;
@@ -120,7 +120,7 @@ export class FuturesService {
         });
   }
 
-  
+
   async closing(api: GateApi.FuturesApi, contract: string, autoSize: number, callback?: Function) {
     const futuresOrder = new GateApi.FuturesOrder(); // FuturesOrder | 
     futuresOrder.contract = contract;
@@ -148,6 +148,16 @@ export class FuturesService {
 
   async cancelOrders(api: GateApi.FuturesApi, contract: string) {
     return api.cancelFuturesOrders(SETTLE, contract, null)
+      .then(value => {
+        return value.body
+      },
+        error => {
+          return error
+        });
+  }
+
+  async cancelOrder(api: GateApi.FuturesApi, orderId: string) {
+    return api.cancelFuturesOrder(SETTLE, orderId)
       .then(value => {
         return value.body
       },

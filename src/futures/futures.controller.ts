@@ -84,6 +84,11 @@ export class FuturesController {
     return this.appService.openOrders(await this.buildApi(req), contract);
   }
 
+  @Post("/cancelOrder/:orderId")
+  async cancelOrder(@Param('orderId') orderId: string, @Req() req) {
+    return this.appService.cancelOrder(await this.buildApi(req), orderId);
+  }
+
   @Post("/saveGrid")
   async saveGrid(@Body() grid: Grid, @Req() req) {
     if (Math.floor(grid.totalSize) != grid.totalSize || Math.floor(grid.gridNum) != grid.gridNum) {
