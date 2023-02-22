@@ -8,7 +8,7 @@ import { User } from '../entities/user.entity';
 import * as uuid from 'uuid';
 import { encrypt } from '../utils/api';
 
-@Controller('accounts')
+@Controller('grid/accounts')
 export class AccountsController {
   private readonly logger = new Logger(AccountsController.name);
 
@@ -19,7 +19,7 @@ export class AccountsController {
     if (!sessionID) {
       throw new ForbiddenException();
     }
-    
+
     const user = await this.dataSource.getRepository(User).findOneBy({ sessionID: sessionID });
     if (user == null || user.loginTime.getTime() + 1000 * 24 * 3600 * 7 < new Date().getTime()) {
       throw new ForbiddenException();

@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { User } from '../entities/user.entity';
 import { buildAPIFromUser, encrypt } from '../utils/api';
 
-@Controller('futures')
+@Controller('grid/futures')
 export class FuturesController {
   private readonly logger = new Logger(FuturesController.name);
 
