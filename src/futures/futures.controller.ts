@@ -38,7 +38,7 @@ export class FuturesController {
 
   @Post("/logout")
   async logout(@Req() req, @Res({ passthrough: true }) resp) {
-    const user = await this.checkSession(req.cookies.sessionID);
+    const user = await this.checkSession(req.headers.sessionid);
     user.sessionID = null;
     user.loginTime = null;
     await this.dataSource.getRepository(User).save(user);
