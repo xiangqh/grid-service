@@ -6,6 +6,8 @@ import { ConfigService } from '@nestjs/config';
 
 import * as CryptoJS from "crypto-js";
 
+import { Log4jsLogger } from './log4js';
+
 function initPasswork(passkey: string) {
   process.stdin.setEncoding('utf8');
   process.stdin.on('data', (input: any) => {
@@ -28,6 +30,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({ credentials: true, origin: true });
   app.use(cookieParser());
+  app.useLogger(app.get(Log4jsLogger));
 
   const configService = app.get(ConfigService);
   

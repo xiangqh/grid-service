@@ -5,6 +5,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountsModule } from './accounts/accounts.module';
 
+import { Log4jsModule } from './log4js';
 import configuration from './config/configuration';
 import { Grid } from './entities/grid.entity';
 import { User } from './entities/user.entity';
@@ -12,6 +13,7 @@ import { FuturesModule } from './futures/futures.module';
 
 @Module({
   imports: [
+    Log4jsModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
