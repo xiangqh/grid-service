@@ -38,3 +38,4 @@ config.yaml
 *.sh
 package-lock.json
 *.spec.ts
+package-lock.json
