@@ -154,8 +154,7 @@ export class TaskService {
                 this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} buy size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.createOrder, [contract.name, grid.buyPrice, grid.totalSize, 1]);
             }
-        }
-        else {
+        } else if(this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) > 0) {
             this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} positionSize: ${position.size}`)
             const spanPrice = (Number(grid.topPrice) - Number(grid.buyPrice)) / grid.gridNum;
             const spanSize = grid.totalSize / grid.gridNum;
@@ -214,8 +213,7 @@ export class TaskService {
                 this.logger.log(`processL ${id} buyPrice: ${grid.buyPrice} buy size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.createOrder, [contract.name, grid.buyPrice, grid.totalSize, 0]);
             }
-        }
-        else {
+        } else if(this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) < 0) {
             this.logger.log(`processL ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} positionSize: ${position.size}`)
             const spanPrice = (Number(grid.topPrice) - Number(grid.buyPrice)) / grid.gridNum;
             const spanSize = grid.totalSize / grid.gridNum;
