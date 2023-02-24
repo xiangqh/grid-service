@@ -52,7 +52,7 @@ export class TaskService {
             });
 
             gridGroup.forEach((value, key) => {
-                this.startGridTask(key, value, '0/5 * * * * *');
+                this.startGridTask(key, value, '0/3 * * * * *');
             })
         });
     }
@@ -124,7 +124,6 @@ export class TaskService {
             const orderLeftsList = this.buildOrderLefts(values[1]);
             this.logger.log(`run task[${contractName}] user[${userId}] lastPrice:${contract.lastPrice} gridGroup[${grids[0]?.id}, ${grids[1]?.id}] positions[${positions[0].size}, ${positions[1].size}]`);
 
-            // console.log(orderLeftsList);
             this.processLong(grids[0], contract, positions[0], orderLeftsList[0], api);
             this.processShort(grids[1], contract, positions[1], orderLeftsList[1], api);
         }).catch(err => {

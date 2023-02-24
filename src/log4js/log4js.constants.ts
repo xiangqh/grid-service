@@ -19,7 +19,7 @@ export const LOG4JS_NO_COLOUR_DEFAULT_LAYOUT = {
   type: 'pattern',
   // log4js default pattern %d{yyyy-MM-dd HH:mm:ss:SSS} [%thread] %-5level %logger{36} - %msg%n
   // we use process id instead thread id
-  pattern: '%d{yyyy/MM/dd hh:mm:ss:SSS} %-5.5p --- [%15.15x{name}] %m',
+  pattern: '%d{yyyy/MM/dd hh:mm:ss:SSS} %-5.5p [%11.11x{name}] %m',
   tokens: {
     name: (logEvent) => {
       return (logEvent.context && logEvent.context['name']) || '-';
