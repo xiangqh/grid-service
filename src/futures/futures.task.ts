@@ -139,23 +139,24 @@ export class TaskService {
         }
 
         const id = `${contract.name}[${contract.lastPrice}]_G[${grid.id}]`;
-        this.logger.log(`processShort ${id} buyPrice: ${grid.buyPrice} totalSize: ${grid.totalSize}] positionSize: ${position.size}`);
+        this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} totalSize: ${grid.totalSize} positionSize: ${position.size}`);
         
         if (this.comparePrice(contract.lastPrice, grid.closePrice, grid.priceRound) >= 0) {
             //closing lastPrice >= closePrice
             if (position.size < 0) {
-                this.logger.log(`processShort ${id} closePrice: ${grid.closePrice} close size: ${position.size}`);
+                this.logger.log(`processS ${id} closePrice: ${grid.closePrice} close size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.closing, [contract.name, 1]);
             }
+            this.appService.cancelOrders(api, contract.name);
         } else if (this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) >= 0) {
             //start lastPrice >= buyPrice
             if (position.size == 0 && (!orderLefts[grid.buyPrice] || orderLefts[grid.buyPrice] == 0)) {
-                this.logger.log(`processShort ${id} buyPrice: ${grid.buyPrice} buy size: ${position.size}`);
+                this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} buy size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.createOrder, [contract.name, grid.buyPrice, grid.totalSize, 1]);
             }
         }
         else {
-            this.logger.log(`processShort ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} positionSize: ${position.size}`)
+            this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} positionSize: ${position.size}`)
             const spanPrice = (Number(grid.topPrice) - Number(grid.buyPrice)) / grid.gridNum;
             const spanSize = grid.totalSize / grid.gridNum;
 
@@ -176,12 +177,12 @@ export class TaskService {
 
                     // console.log(needSize, sellSize, buySize, orderLefts[gridPrice], orderLefts[gridPrice + spanPrice]);
                     if (sellSize > 0) {
-                        this.logger.log(`processShort ${id} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
+                        this.logger.log(`processS ${id} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice + spanPrice, sellSize, 1]);
                     }
 
                     if (buySize < 0) {
-                        this.logger.log(`processShort ${id} buy size:${buySize} at price:${gridPrice}`);
+                        this.logger.log(`processS ${id} buy size:${buySize} at price:${gridPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice, buySize, 1]);
                     }
                     break;
@@ -198,23 +199,24 @@ export class TaskService {
         }
 
         const id = `${contract.name}[${contract.lastPrice}]_G[${grid.id}]`;
-        this.logger.log(`processLong ${id}, buyPrice: ${grid.buyPrice} totalSize: ${grid.totalSize}] positionSize: ${position.size}`);
+        this.logger.log(`processL  ${id} buyPrice: ${grid.buyPrice} totalSize: ${grid.totalSize} positionSize: ${position.size}`);
         
         if (this.comparePrice(contract.lastPrice, grid.closePrice, grid.priceRound) <= 0) {
             //closing lastPrice <= closePrice
             if (position.size > 0) {
-                this.logger.log(`processLong ${id} closePrice: ${grid.closePrice} close size: ${position.size}`)
+                this.logger.log(`processL ${id} closePrice: ${grid.closePrice} close size: ${position.size}`)
                 this.executeProcess(api, grid, this.appService.closing, [contract.name, 0]);
             }
+            this.appService.cancelOrders(api, contract.name);
         } else if (this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) <= 0) {
             //start lastPrice <= buyPrice
             if (position.size == 0 && (!orderLefts[grid.buyPrice] || orderLefts[grid.buyPrice] == 0)) {
-                this.logger.log(`processLong ${id} buyPrice: ${grid.buyPrice} buy size: ${position.size}`);
+                this.logger.log(`processL ${id} buyPrice: ${grid.buyPrice} buy size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.createOrder, [contract.name, grid.buyPrice, grid.totalSize, 0]);
             }
         }
         else {
-            this.logger.log(`processLong ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} positionSize: ${position.size}`)
+            this.logger.log(`processL ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} positionSize: ${position.size}`)
             const spanPrice = (Number(grid.topPrice) - Number(grid.buyPrice)) / grid.gridNum;
             const spanSize = grid.totalSize / grid.gridNum;
 
@@ -235,12 +237,12 @@ export class TaskService {
 
                     // console.log(needSize, sellSize, buySize, orderLefts[gridPrice], orderLefts[gridPrice + spanPrice]);
                     if (sellSize < 0) {
-                        this.logger.log(`processLong ${id} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
+                        this.logger.log(`processL ${id} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice + spanPrice, sellSize, 0]);
                     }
 
                     if (buySize > 0) {
-                        this.logger.log(`processLong ${id} buy size:${buySize} at price:${gridPrice}`);
+                        this.logger.log(`processL ${id} buy size:${buySize} at price:${gridPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice, buySize, 0]);
                     }
                     break;
