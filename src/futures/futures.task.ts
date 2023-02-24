@@ -172,7 +172,7 @@ export class TaskService {
                         sellSize -= orderLefts[gridPrice + spanPrice].sellSize;
                     }
 
-                    // console.log(needSize, sellSize, buySize, orderLefts[gridPrice], orderLefts[gridPrice + spanPrice]);
+                    console.log(needSize, sellSize, buySize, orderLefts[gridPrice], orderLefts[gridPrice + spanPrice]);
                     if (sellSize > 0) {
                         this.logger.log(`processS ${id} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice + spanPrice, sellSize, 1]);
