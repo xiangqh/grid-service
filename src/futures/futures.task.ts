@@ -147,7 +147,6 @@ export class TaskService {
                 this.logger.log(`processS ${id} closePrice: ${grid.closePrice} close size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.closing, [contract.name, 1]);
             }
-            this.appService.cancelOrders(api, contract.name);
         } else if (this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) >= 0) {
             //start lastPrice >= buyPrice
             if (position.size == 0 && (!orderLefts[grid.buyPrice] || orderLefts[grid.buyPrice] == 0)) {
@@ -206,7 +205,6 @@ export class TaskService {
                 this.logger.log(`processL ${id} closePrice: ${grid.closePrice} close size: ${position.size}`)
                 this.executeProcess(api, grid, this.appService.closing, [contract.name, 0]);
             }
-            this.appService.cancelOrders(api, contract.name);
         } else if (this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) <= 0) {
             //start lastPrice <= buyPrice
             if (position.size == 0 && (!orderLefts[grid.buyPrice] || orderLefts[grid.buyPrice] == 0)) {
@@ -233,7 +231,6 @@ export class TaskService {
                         sellSize -= orderLefts[gridPrice + spanPrice].sellSize;
                     }
 
-                    // console.log(needSize, sellSize, buySize, orderLefts[gridPrice], orderLefts[gridPrice + spanPrice]);
                     if (sellSize < 0) {
                         this.logger.log(`processL ${id} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice + spanPrice, sellSize, 0]);
