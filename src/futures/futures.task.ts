@@ -51,32 +51,34 @@ export class TaskService {
                 }
             });
 
+            let index = 0
             gridGroup.forEach((value, key) => {
-                this.startGridTask(key, value, '0/3 * * * * *');
+                this.startGridTask(key, value, `${index++}/3 * * * * *`);
             })
         });
     }
 
     startGridTask(key: string, gridGroup: GridGroup, cron: string) {
-        this.logger.log(`start task ${key} run.... ,cron ${cron}!`);
+        let self = this;
+        self.logger.log(`start task ${key} run.... ,cron ${cron}!`);
         const job = new CronJob(cron, async () => {
             try {
                 Promise.all([
-                    this.gridRepository.findOneBy({ id: gridGroup.long }),
-                    this.gridRepository.findOneBy({ id: gridGroup.short })
+                    self.gridRepository.findOneBy({ id: gridGroup.long }),
+                    self.gridRepository.findOneBy({ id: gridGroup.short })
                 ]).then((values) => {
                     if ((values[0] == null || values[0].status == GridStatus.STOPED) &&
                         (values[1] == null || values[1].status == GridStatus.STOPED)) {
-                        this.logger.log(`task grid[${key}] STOPED`);
+                        self.logger.log(`task grid[${key}] STOPED`);
                     } else {
-                        this.runGridGroupTask(values);
+                        self.runGridGroupTask(values);
                     }
                 });
             } catch (error) {
-                this.logger.error(error);
+                self.logger.error(error);
             }
         });
-        this.schedulerRegistry.addCronJob(key, job);
+        self.schedulerRegistry.addCronJob(key, job);
         job.start();
     }
 
@@ -105,30 +107,36 @@ export class TaskService {
 
 
     async runGridGroupTask(grids: Grid[]) {
+        let self = this;
         const userId = grids[0] != null ? grids[0].userId : grids[1]?.userId;
         const contractName = grids[0] != null ? grids[0].contract : grids[1]?.contract;
-        const api = this.apiMaps.get(userId);
+        const api = self.apiMaps.get(userId);
 
         if (!api) {
-            this.logger.error(`run task[${contractName}] gridGroup[${grids[0]?.id}, ${grids[1]?.id}], user[${userId}] error`);
+            self.logger.error(`run task[${contractName}] gridGroup[${grids[0]?.id}, ${grids[1]?.id}], user[${userId}] error`);
             return;
         }
+        try {
+            const contract = await self.appService.getContracts(api, contractName);
+            Promise.all([
+                self.appService.listPositions(api, contract.name),
+                self.appService.openOrders(api, contract.name),
+            ]).then((values) => {
+                const positions = values[0];
+                const orders = values[1];
+                const orderLeftsList = self.buildOrderLefts(values[1]);
+                self.logger.log(`run task[${contractName}] user[${userId}] lastPrice:${contract.lastPrice} gridGroup[${grids[0]?.id}, ${grids[1]?.id}] positions[${positions[0].size}, ${positions[1].size}]`);
 
-        const contract = await this.appService.getContracts(api, contractName);
-        Promise.all([
-            this.appService.listPositions(api, contract.name),
-            this.appService.openOrders(api, contract.name),
-        ]).then((values) => {
-            const positions = values[0];
-            const orders = values[1];
-            const orderLeftsList = this.buildOrderLefts(values[1]);
-            this.logger.log(`run task[${contractName}] user[${userId}] lastPrice:${contract.lastPrice} gridGroup[${grids[0]?.id}, ${grids[1]?.id}] positions[${positions[0].size}, ${positions[1].size}]`);
+                self.processLong(grids[0], contract, positions[0], orderLeftsList[0], api);
+                self.processShort(grids[1], contract, positions[1], orderLeftsList[1], api);
+            }).catch(err => {
+                self.logger.error(err);
+            });
 
-            this.processLong(grids[0], contract, positions[0], orderLeftsList[0], api);
-            this.processShort(grids[1], contract, positions[1], orderLeftsList[1], api);
-        }).catch(err => {
-            console.log(err)
-        });
+        } catch (error) {
+            self.logger.error(error);
+        }
+
     }
 
     async processShort(grid: Grid, contract: Contract, position: Position, orderLefts: any, api: FuturesApi) {
@@ -139,7 +147,7 @@ export class TaskService {
 
         const id = `${contract.name}[${contract.lastPrice}]_G[${grid.id}]`;
         this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} totalSize: ${grid.totalSize} positionSize: ${position.size}`);
-        
+
         if (this.comparePrice(contract.lastPrice, grid.closePrice, grid.priceRound) >= 0) {
             //closing lastPrice >= closePrice
             if (position.size < 0) {
@@ -152,7 +160,7 @@ export class TaskService {
                 this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} buy size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.createOrder, [contract.name, grid.buyPrice, grid.totalSize, 1]);
             }
-        } else if(this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) > 0) {
+        } else if (this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) > 0) {
             this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} positionSize: ${position.size}`)
             const spanPrice = (Number(grid.topPrice) - Number(grid.buyPrice)) / grid.gridNum;
             const spanSize = grid.totalSize / grid.gridNum;
@@ -197,7 +205,7 @@ export class TaskService {
 
         const id = `${contract.name}[${contract.lastPrice}]_G[${grid.id}]`;
         this.logger.log(`processL  ${id} buyPrice: ${grid.buyPrice} totalSize: ${grid.totalSize} positionSize: ${position.size}`);
-        
+
         if (this.comparePrice(contract.lastPrice, grid.closePrice, grid.priceRound) <= 0) {
             //closing lastPrice <= closePrice
             if (position.size > 0) {
@@ -210,7 +218,7 @@ export class TaskService {
                 this.logger.log(`processL ${id} buyPrice: ${grid.buyPrice} buy size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.createOrder, [contract.name, grid.buyPrice, grid.totalSize, 0]);
             }
-        } else if(this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) < 0) {
+        } else if (this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) < 0) {
             this.logger.log(`processL ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} positionSize: ${position.size}`)
             const spanPrice = (Number(grid.topPrice) - Number(grid.buyPrice)) / grid.gridNum;
             const spanSize = grid.totalSize / grid.gridNum;
