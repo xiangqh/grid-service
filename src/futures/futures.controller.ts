@@ -6,6 +6,7 @@ import { FuturesService } from './futures.service';
 import { ConfigService } from '@nestjs/config';
 import { User } from '../entities/user.entity';
 import { buildAPIFromUser, encrypt } from '../utils/api';
+import { Token } from 'src/entities/token.entity';
 
 @Controller('grid/futures')
 export class FuturesController {
@@ -32,6 +33,11 @@ export class FuturesController {
     }
     const user = await this.checkSession(sessionID);
     return buildAPIFromUser(user, this.configService.get('basePath'));
+  }
+
+  @Get("/tokens")
+  tokens() {
+    return this.dataSource.getRepository(Token).find()
   }
 
   @Get("/getContract/:contract")

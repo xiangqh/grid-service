@@ -52,8 +52,7 @@ export class FuturesService {
     return api.getDualModePosition(SETTLE, contract)
       .then(value => {
         return value.body;
-      },
-        error => {
+      },error => {
           return error
         });
   }
@@ -115,7 +114,7 @@ export class FuturesService {
           if (callback) {
             callback();
           }
-          console.log(error);
+          this.logger.error(error);
           return error
         });
   }
@@ -142,6 +141,7 @@ export class FuturesService {
           if (callback) {
             callback();
           }
+          this.logger.error(error);
           return error
         });
   }

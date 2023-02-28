@@ -8,13 +8,13 @@ import * as CryptoJS from "crypto-js";
 
 import { Log4jsLogger } from './log4js';
 
-function initPasswork(passkey: string) {
+function initKey(keyHash: string) {
   process.stdin.setEncoding('utf8');
   process.stdin.on('data', (input: any) => {
     input = input.toString().trim();
-    if (passkey != CryptoJS.MD5(input).toString()) {
+    if (keyHash != CryptoJS.MD5(input).toString()) {
       console.error("password error!");
-      process.exit(1);
+      process.exit();
       return;
     }
 
@@ -22,10 +22,14 @@ function initPasswork(passkey: string) {
     key.write(input);
     global.key = key.toString().trim();
   });
+
+  process.on('exit', () => {
+    console.log("process.exit() method is fired")
+  })
 }
 
 async function bootstrap() {
-  initPasswork("8c84d475cabe46c1a83c92d20b615bbb");
+  initKey("8c84d475cabe46c1a83c92d20b615bbb");
 
   const app = await NestFactory.create(AppModule);
   app.enableCors({ credentials: true, origin: true });
@@ -33,7 +37,7 @@ async function bootstrap() {
   app.useLogger(app.get(Log4jsLogger));
 
   const configService = app.get(ConfigService);
-  
+
   await app.listen(configService.get("port", "3000"));
   console.log(`app start port ${configService.get("port", "3000")}`,);
 }

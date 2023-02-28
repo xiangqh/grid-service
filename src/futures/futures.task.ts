@@ -53,7 +53,7 @@ export class TaskService {
 
             let index = 0
             gridGroup.forEach((value, key) => {
-                this.startGridTask(key, value, `${index++}/3 * * * * *`);
+                this.startGridTask(key, value, `0/1 * * * * *`);
             })
         });
     }
@@ -84,24 +84,28 @@ export class TaskService {
 
     buildOrderLefts(orders) {
         const list = [{}, {}];
-        orders.forEach(each => {
-            let orderLefts;
-            if ((each.isReduceOnly && each.size < 0) || (!each.isReduceOnly && each.size > 0)) {
-                orderLefts = list[0];
-            } else {
-                orderLefts = list[1];
-            }
-
-            if (!orderLefts[each.price]) {
-                orderLefts[each.price] = { buySize: 0, sellSize: 0 };
-            }
-
-            if (each.isReduceOnly) {
-                orderLefts[each.price].sellSize += each.left;
-            } else {
-                orderLefts[each.price].buySize += each.left;
-            }
-        });
+        if(orders instanceof Array) {
+            orders.forEach(each => {
+                let orderLefts;
+                if ((each.isReduceOnly && each.size < 0) || (!each.isReduceOnly && each.size > 0)) {
+                    orderLefts = list[0];
+                } else {
+                    orderLefts = list[1];
+                }
+    
+                if (!orderLefts[each.price]) {
+                    orderLefts[each.price] = { buySize: 0, sellSize: 0 };
+                }
+    
+                if (each.isReduceOnly) {
+                    orderLefts[each.price].sellSize += each.left;
+                } else {
+                    orderLefts[each.price].buySize += each.left;
+                }
+            });
+        } else {
+            this.logger.error("no orders");
+        }
         return list;
     }
 
@@ -154,13 +158,14 @@ export class TaskService {
                 this.logger.log(`processS ${id} closePrice: ${grid.closePrice} close size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.closing, [contract.name, 1]);
             }
-        } else if (this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) >= 0) {
+        } else if (this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) == 0) {
             //start lastPrice >= buyPrice
             if (position.size == 0 && (!orderLefts[grid.buyPrice] || orderLefts[grid.buyPrice] == 0)) {
                 this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} buy size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.createOrder, [contract.name, grid.buyPrice, grid.totalSize, 1]);
             }
-        } else if (this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) > 0) {
+        } else if (this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) > 0 
+                && this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) < 0) {
             this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} positionSize: ${position.size}`)
             const spanPrice = (Number(grid.topPrice) - Number(grid.buyPrice)) / grid.gridNum;
             const spanSize = grid.totalSize / grid.gridNum;
@@ -196,7 +201,6 @@ export class TaskService {
         }
     }
 
-
     async processLong(grid: Grid, contract: Contract, position: Position, orderLefts: any, api: FuturesApi) {
         if (!grid && grid.status != GridStatus.COMPLETED) {
             this.logger.log(`grid[${grid.id}] STOPED or SUBMITTING`);
@@ -212,13 +216,14 @@ export class TaskService {
                 this.logger.log(`processL ${id} closePrice: ${grid.closePrice} close size: ${position.size}`)
                 this.executeProcess(api, grid, this.appService.closing, [contract.name, 0]);
             }
-        } else if (this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) <= 0) {
+        } else if (this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) == 0) {
             //start lastPrice <= buyPrice
             if (position.size == 0 && (!orderLefts[grid.buyPrice] || orderLefts[grid.buyPrice] == 0)) {
                 this.logger.log(`processL ${id} buyPrice: ${grid.buyPrice} buy size: ${position.size}`);
                 this.executeProcess(api, grid, this.appService.createOrder, [contract.name, grid.buyPrice, grid.totalSize, 0]);
             }
-        } else if (this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) < 0) {
+        } else if (this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) < 0 
+                && this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) > 0) {
             this.logger.log(`processL ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} positionSize: ${position.size}`)
             const spanPrice = (Number(grid.topPrice) - Number(grid.buyPrice)) / grid.gridNum;
             const spanSize = grid.totalSize / grid.gridNum;
