@@ -5,6 +5,8 @@ import { DataSource, Repository } from 'typeorm';
 import { Grid } from '../entities/grid.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Position } from 'gate-api';
+import { CONSTRAINT } from 'sqlite3';
+import console from 'console';
 
 const SETTLE = "usdt";
 
@@ -86,7 +88,7 @@ export class FuturesService {
 
 
   async createOrder(api: GateApi.FuturesApi, contract: string, price: string, size: number, autoSize: number, callback?: Function) {
-    console.log(`createOrder ${contract}  ${price} ${size} ${autoSize}`,)
+    // console.log(`createOrder ${contract}  ${price} ${size} ${autoSize}`,)
     const futuresOrder = new GateApi.FuturesOrder(); // FuturesOrder | 
 
     futuresOrder.contract = contract;
@@ -114,7 +116,8 @@ export class FuturesService {
           if (callback) {
             callback();
           }
-          this.logger.error(error);
+          // console.error(error);
+          // this.logger.error(error);
           return error
         });
   }
@@ -141,7 +144,7 @@ export class FuturesService {
           if (callback) {
             callback();
           }
-          this.logger.error(error);
+          // console.error(error);
           return error
         });
   }

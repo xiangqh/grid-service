@@ -10,6 +10,7 @@ import configuration from './config/configuration';
 import { Grid } from './entities/grid.entity';
 import { User } from './entities/user.entity';
 import { FuturesModule } from './futures/futures.module';
+import { Token } from './entities/token.entity';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { FuturesModule } from './futures/futures.module';
             username: configService.get('db.username'),
             password: configService.get('db.password'),
             database: configService.get('db.database'),
-            entities: [User, Grid],
+            entities: [User, Grid, Token],
             synchronize: true,
           }
         } else {

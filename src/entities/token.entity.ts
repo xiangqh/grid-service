@@ -10,4 +10,9 @@ export class Token {
     unique: true,
   })
   token: string
+
+  @Column({
+    unique: true,
+  })
+  index: number
 }

@@ -110,14 +110,31 @@ export class FuturesController {
       throw new BadRequestException();
     }
 
+    const repository = this.dataSource.getRepository(Grid);
+
     const user = await this.checkSession(req.headers.sessionid);
+
+    if (!grid.id) {
+      if (Number(grid.topPrice) > Number(grid.buyPrice)) {
+        const ret = await repository.query(`SELECT count(*) as count FROM grid g WHERE g.topPrice>g.buyPrice AND g.contract='${grid.contract}' AND g.userId=${user.id};`);
+        if (ret[0].count > 0) {
+          throw new BadRequestException();
+        }
+      } else {
+        const ret = await repository.query(`SELECT count(*) as count FROM grid g WHERE g.topPrice<g.buyPrice AND g.contract='${grid.contract}' AND g.userId=${user.id};`);
+        if (ret[0].count > 0) {
+          throw new BadRequestException();
+        }
+      }
+    }
+
     grid.userId = user.id;
     this.logger.log(`saveGrid, ${JSON.stringify(grid)}`);
     if (!grid.status) {
       grid.status = GridStatus.COMPLETED;
     }
 
-    return this.dataSource.getRepository(Grid).save(grid);;
+    return repository.save(grid);;
   }
 
   @Post("/updateGrid/")
@@ -145,14 +162,14 @@ export class FuturesController {
       }
     });
     let ret = [null, null];
-    if(list.length == 1) {
-      if(Number(list[0].topPrice) > Number(list[0].buyPrice)) {
+    if (list.length == 1) {
+      if (Number(list[0].topPrice) > Number(list[0].buyPrice)) {
         ret[0] = list[0];
       } else {
         ret[1] = list[0];
       }
-    } else if(list.length == 2){
-      if(Number(list[0].topPrice) > Number(list[0].buyPrice)) {
+    } else if (list.length == 2) {
+      if (Number(list[0].topPrice) > Number(list[0].buyPrice)) {
         ret[0] = list[0];
         ret[1] = list[1];
       } else {

@@ -2,12 +2,6 @@ import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn, Unique } from 't
 
 // export type GridType ="SUBMITTING"|"COMPLETED";
 
-export enum GridStatus {
-  SUBMITTING = "SUBMITTING",
-  COMPLETED = "COMPLETED",
-  STOPED = "STOPED",
-};
-
 @Entity()
 export class User {
 
