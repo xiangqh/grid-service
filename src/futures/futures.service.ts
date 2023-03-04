@@ -1,12 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as GateApi from 'gate-api';
 import { ConfigService } from '@nestjs/config';
-import { DataSource, Repository } from 'typeorm';
-import { Grid } from '../entities/grid.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Position } from 'gate-api';
-import { CONSTRAINT } from 'sqlite3';
-import console from 'console';
 
 const SETTLE = "usdt";
 
@@ -16,10 +10,6 @@ export class FuturesService {
   api: GateApi.FuturesApi;
 
   constructor(private configService: ConfigService) {
-    // let client = new GateApi.ApiClient();
-    // client.setApiKeySecret(configService.get('key'), configService.get('secret'));
-    // client.basePath = configService.get('basePath')
-    // this.api = new GateApi.FuturesApi(client);
   }
 
   async getAccounts(api: GateApi.FuturesApi) {
@@ -88,7 +78,7 @@ export class FuturesService {
 
 
   async createOrder(api: GateApi.FuturesApi, contract: string, price: string, size: number, autoSize: number, callback?: Function) {
-    // console.log(`createOrder ${contract}  ${price} ${size} ${autoSize}`,)
+    console.log(`createOrder ${contract}  ${price} ${size} ${autoSize}`,)
     const futuresOrder = new GateApi.FuturesOrder(); // FuturesOrder | 
 
     futuresOrder.contract = contract;
@@ -116,7 +106,7 @@ export class FuturesService {
           if (callback) {
             callback();
           }
-          // console.error(error);
+          console.error(error);
           // this.logger.error(error);
           return error
         });
@@ -144,7 +134,7 @@ export class FuturesService {
           if (callback) {
             callback();
           }
-          // console.error(error);
+          console.error(error);
           return error
         });
   }

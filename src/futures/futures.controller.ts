@@ -37,7 +37,7 @@ export class FuturesController {
 
   @Get("/tokens")
   tokens() {
-    return this.dataSource.getRepository(Token).find()
+    return this.dataSource.getRepository(Token).query("SELECT * FROM token order by `index`");
   }
 
   @Get("/getContract/:contract")
@@ -126,14 +126,10 @@ export class FuturesController {
           throw new BadRequestException();
         }
       }
+      grid.status = GridStatus.STOPED;
     }
-
     grid.userId = user.id;
     this.logger.log(`saveGrid, ${JSON.stringify(grid)}`);
-    if (!grid.status) {
-      grid.status = GridStatus.COMPLETED;
-    }
-
     return repository.save(grid);;
   }
 

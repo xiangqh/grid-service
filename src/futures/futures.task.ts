@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import { DataSource, Repository } from 'typeorm';
 import { CronJob } from 'cron';
 import { FuturesService } from './futures.service';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Grid, GridStatus } from '../entities/grid.entity';
 import { Contract, Position } from 'gate-api';
 import { User } from '../entities/user.entity';
@@ -35,7 +34,7 @@ export class TaskService {
 
         const self = this;
         const job = new CronJob('0 0/1 * * * *', async () => {
-            self.userRepository.find().then(list => {
+            await self.userRepository.find().then(list => {
                 list.forEach(user => {
                     if (!self.apiMaps.has(user.id)) {
                         self.apiMaps.set(user.id, buildAPIFromUser(user, basePath));
@@ -43,7 +42,7 @@ export class TaskService {
                 });
             })
 
-            self.gridRepository.find().then(list => {
+            await self.gridRepository.find().then(list => {
                 let gridGroup = new Map();
                 list.forEach(each => {
                     const id = `U${each.userId}_${each.contract}`;
@@ -57,13 +56,14 @@ export class TaskService {
                     }
                 });
 
-                let index = 0
                 gridGroup.forEach((value, key) => {
-                    self.startGridTask(key, value, `0/1 * * * * *`);
+                    const userId = value.long != null ? value.long.userId : value.short?.userId;
+                    if(self.apiMaps.has(userId)) {
+                        self.startGridTask(key, value, `0/2 * * * * *`);
+                    }
                 })
             });
         });
-        this.schedulerRegistry.addCronJob("init", job);
         job.start();
     }
 
@@ -165,8 +165,8 @@ export class TaskService {
     }
 
     async processShort(grid: Grid, contract: Contract, position: Position, orderLefts: any, api: FuturesApi) {
-        if (!grid || grid.status != GridStatus.COMPLETED) {
-            this.logger.log(`grid[${grid.id}] STOPED or SUBMITTING`);
+        if (!grid) {
+            // this.logger.log(`processShort grid[${grid?.id}] STOPED or SUBMITTING`);
             return;
         }
 
@@ -187,7 +187,7 @@ export class TaskService {
             }
         } else if (this.comparePrice(contract.lastPrice, grid.topPrice, grid.priceRound) > 0
             && this.comparePrice(contract.lastPrice, grid.buyPrice, grid.priceRound) < 0) {
-            this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} orderLefts: ${orderLefts}`)
+            this.logger.log(`processS ${id} buyPrice: ${grid.buyPrice} topPrice: ${grid.topPrice} orderLefts: ${JSON.stringify(orderLefts)}`)
             const spanPrice = (Number(grid.topPrice) - Number(grid.buyPrice)) / grid.gridNum;
             const spanSize = grid.totalSize / grid.gridNum;
 
@@ -206,7 +206,6 @@ export class TaskService {
                         sellSize -= orderLefts[gridPrice + spanPrice].sellSize;
                     }
 
-                    console.log(needSize, sellSize, buySize, orderLefts[gridPrice], orderLefts[gridPrice + spanPrice]);
                     if (sellSize > 0) {
                         this.logger.log(`processS ${id} sell size:${sellSize} at price:${gridPrice + spanPrice}`);
                         this.executeProcess(api, grid, this.appService.createOrder, [contract.name, gridPrice + spanPrice, sellSize, 1]);
@@ -223,8 +222,8 @@ export class TaskService {
     }
 
     async processLong(grid: Grid, contract: Contract, position: Position, orderLefts: any, api: FuturesApi) {
-        if (!grid && grid.status != GridStatus.COMPLETED) {
-            this.logger.log(`grid[${grid.id}] STOPED or SUBMITTING`);
+        if (!grid) {
+            // this.logger.log(`processLong grid[${grid?.id}] STOPED or SUBMITTING`);
             return;
         }
 
